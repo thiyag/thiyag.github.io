@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --bg:        #1a1a2e;
+      --surface:   #16213e;
+      --surface2:  #0f3460;
+      --accent:    #e94560;
+      --x-color:   #4a90d9;
+      --o-color:   #e05c5c;
+      --text:      #eaeaea;
+      --muted:     #8892a0;
+      --radius:    10px;
+      --cell-size: 80px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.2rem;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, var(--x-color), var(--o-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; gap: 1.2rem; }
+    .screen.active { display: flex; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    /* ── Setup Screen ── */
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 480px) { .setup-grid { grid-template-columns: 1fr; } }
+
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.6rem 0.8rem;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+    }
+
+    .templates-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .btn-template {
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-template:hover { border-color: var(--accent); }
+    .btn-template.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 0.7rem 1.4rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.15); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      justify-content: center;
+    }
+
+    /* ── Scoreboard ── */
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .player-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      flex: 1;
+    }
+    .player-score.active-player .player-name {
+      color: var(--text);
+    }
+    .player-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: color 0.2s;
+      text-align: center;
+      word-break: break-word;
+    }
+    .player-mark {
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+    .player-mark.x { color: var(--x-color); }
+    .player-mark.o { color: var(--o-color); }
+    .player-wins {
+      font-size: 2rem;
+      font-weight: 900;
+    }
+    .player-wins.x { color: var(--x-color); }
+    .player-wins.o { color: var(--o-color); }
+
+    .score-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .draws-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+    .draws-count { font-size: 1.5rem; font-weight: 700; color: var(--muted); }
+
+    /* ── Turn Indicator ── */
+    #turn-indicator {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+    #turn-indicator span {
+      font-weight: 700;
+    }
+    #turn-indicator .x { color: var(--x-color); }
+    #turn-indicator .o { color: var(--o-color); }
+
+    /* ── Board ── */
+    #board-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.5rem 0;
+    }
+
+    #board {
+      display: grid;
+      gap: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 3px;
+      position: relative;
+    }
+
+    .cell {
+      background: var(--surface);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: calc(var(--cell-size) * 0.45);
+      font-weight: 900;
+      line-height: 1;
+      user-select: none;
+      transition: background 0.15s, transform 0.12s;
+      aspect-ratio: 1;
+    }
+    .cell:hover:not(.taken) {
+      background: var(--surface2);
+      transform: scale(1.05);
+    }
+    .cell.taken { cursor: default; }
+    .cell.mark-x { color: var(--x-color); }
+    .cell.mark-o { color: var(--o-color); }
+
+    .cell.winning {
+      background: rgba(255,200,50,0.18);
+      box-shadow: 0 0 0 2px rgba(255,200,50,0.6);
+      animation: pulse-win 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-win {
+      from { box-shadow: 0 0 0 2px rgba(255,200,50,0.4); }
+      to   { box-shadow: 0 0 8px 4px rgba(255,200,50,0.7); }
+    }
+
+    /* ── Overlay ── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,30,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #overlay.show { display: flex; }
+
+    .overlay-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 360px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: pop-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .overlay-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+    }
+    .overlay-title.x { color: var(--x-color); }
+    .overlay-title.o { color: var(--o-color); }
+    .overlay-title.draw { color: var(--muted); }
+
+    .overlay-series {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .overlay-series strong { color: var(--text); font-size: 1.1rem; }
+
+    /* ── History ── */
+    #history-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+    }
+    .history-entry {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      background: var(--surface2);
+    }
+    .history-entry .winner { font-weight: 700; }
+    .history-entry .winner.x { color: var(--x-color); }
+    .history-entry .winner.o { color: var(--o-color); }
+    .history-entry .winner.draw { color: var(--muted); }
+
+    /* ── Config badge ── */
+    #config-badge {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* ── Error ── */
+    .error {
+      color: var(--accent);
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <h1>Tic Tac Toe</h1>
+
+  <!-- ════════ SETUP SCREEN ════════ -->
+  <div id="screen-setup" class="screen">
+    <div class="card">
+      <div class="section-label">Players</div>
+      <div class="setup-grid">
+        <div class="field">
+          <label>Player 1 Name</label>
+          <input id="p1-name" type="text" placeholder="Player 1" maxlength="20" />
+        </div>
+        <div class="field">
+          <label>Player 2 Name</label>
+          <input id="p2-name" type="text" placeholder="Player 2" maxlength="20" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Quick Templates</div>
+      <div class="templates-row" id="templates-row"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Custom Configuration</div>
+      <div class="setup-grid">
+        <div class="field">
+          <label>Grid Size (N×N)  — 3 to 15</label>
+          <input id="grid-size" type="number" min="3" max="15" value="3" />
+        </div>
+        <div class="field">
+          <label>Squares to Win  — 3 to N</label>
+          <input id="win-length" type="number" min="3" value="3" />
+        </div>
+      </div>
+      <div class="error" id="setup-error"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start">Start Series</button>
+    </div>
+  </div>
+
+  <!-- ════════ GAME SCREEN ════════ -->
+  <div id="screen-game" class="screen">
+    <!-- Scoreboard -->
+    <div class="card" id="scoreboard">
+      <div class="scoreboard">
+        <div class="player-score" id="score-p1">
+          <div class="player-name" id="score-p1-name">Player 1</div>
+          <div class="player-mark x">X</div>
+          <div class="player-wins x" id="score-p1-wins">0</div>
+        </div>
+        <div class="score-center">
+          <div class="draws-label">Draws</div>
+          <div class="draws-count" id="score-draws">0</div>
+        </div>
+        <div class="player-score" id="score-p2">
+          <div class="player-name" id="score-p2-name">Player 2</div>
+          <div class="player-mark o">O</div>
+          <div class="player-wins o" id="score-p2-wins">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Turn indicator -->
+    <div id="turn-indicator"></div>
+
+    <!-- Board -->
+    <div id="board-wrap">
+      <div id="board"></div>
+    </div>
+
+    <!-- Config badge -->
+    <div id="config-badge"></div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-primary"   id="btn-new-game">New Game</button>
+      <button class="btn btn-secondary" id="btn-change-settings">Change Settings</button>
+      <button class="btn btn-secondary" id="btn-show-history">History</button>
+    </div>
+
+    <!-- History (collapsed) -->
+    <div class="card" id="history-card" style="display:none;">
+      <div class="section-label">Game History</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ OVERLAY ════════ -->
+<div id="overlay">
+  <div class="overlay-card">
+    <div class="overlay-title" id="overlay-title"></div>
+    <div class="overlay-series" id="overlay-series"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary"   id="btn-overlay-again">Play Again</button>
+      <button class="btn btn-secondary" id="btn-overlay-new-series">New Series</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════
+const STORAGE_SERIES    = 'ttt_series';
+const STORAGE_GAMESTATE = 'ttt_gamestate';
+const MIN_GRID = 3;
+const MAX_GRID = 15;
+
+const TEMPLATES = [
+  { label: 'Classic 3×3',  gridSize: 3,  winLength: 3 },
+  { label: '5×5 Win-4',    gridSize: 5,  winLength: 4 },
+  { label: '10×10 Win-5',  gridSize: 10, winLength: 5 },
+  { label: '15×15 Win-5',  gridSize: 15, winLength: 5 },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let state = {
+  gridSize:     3,
+  winLength:    3,
+  players: [
+    { id: 'p1', name: 'Player 1', mark: 'X' },
+    { id: 'p2', name: 'Player 2', mark: 'O' },
+  ],
+  currentPlayerIndex: 0,
+  board:        [],
+  moveCount:    0,
+  gameOver:     false,
+  winner:       null,  // null | 'p1' | 'p2' | 'draw'
+  winningCells: [],
+  scores:       { p1: 0, p2: 0, draws: 0 },
+  history:      [],
+};
+
+// ═══════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════
+function loadFromStorage() {
+  try {
+    const series = JSON.parse(localStorage.getItem(STORAGE_SERIES));
+    if (series) {
+      state.gridSize           = series.gridSize    || 3;
+      state.winLength          = series.winLength   || 3;
+      state.players[0].name    = series.player1Name || 'Player 1';
+      state.players[1].name    = series.player2Name || 'Player 2';
+      state.scores             = series.scores      || { p1: 0, p2: 0, draws: 0 };
+      state.history            = series.history     || [];
+    }
+
+    const gs = JSON.parse(localStorage.getItem(STORAGE_GAMESTATE));
+    if (gs && !gs.gameOver &&
+        gs.gridSize === state.gridSize &&
+        gs.winLength === state.winLength) {
+      state.board              = gs.board;
+      state.currentPlayerIndex = gs.currentPlayerIndex;
+      state.moveCount          = gs.moveCount;
+      state.gameOver           = false;
+      state.winner             = null;
+      state.winningCells       = [];
+      return 'game'; // resume in-progress game
+    }
+
+    return series ? 'game' : 'setup';
+  } catch(e) {
+    return 'setup';
+  }
+}
+
+function saveSeriesState() {
+  const data = {
+    gridSize:    state.gridSize,
+    winLength:   state.winLength,
+    player1Name: state.players[0].name,
+    player2Name: state.players[1].name,
+    scores:      state.scores,
+    history:     state.history,
+  };
+  localStorage.setItem(STORAGE_SERIES, JSON.stringify(data));
+}
+
+function saveGameState() {
+  const data = {
+    gridSize:            state.gridSize,
+    winLength:           state.winLength,
+    board:               state.board,
+    currentPlayerIndex:  state.currentPlayerIndex,
+    moveCount:           state.moveCount,
+    gameOver:            state.gameOver,
+    winner:              state.winner,
+  };
+  localStorage.setItem(STORAGE_GAMESTATE, JSON.stringify(data));
+}
+
+function clearGameState() {
+  localStorage.removeItem(STORAGE_GAMESTATE);
+}
+
+function clearAll() {
+  localStorage.removeItem(STORAGE_SERIES);
+  localStorage.removeItem(STORAGE_GAMESTATE);
+}
+
+// ═══════════════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════════════
+function initNewGame() {
+  const total = state.gridSize * state.gridSize;
+  state.board            = Array(total).fill(null);
+  state.moveCount        = 0;
+  state.gameOver         = false;
+  state.winner           = null;
+  state.winningCells     = [];
+  // Do NOT reset currentPlayerIndex — keep turn order
+  saveGameState();
+}
+
+function handleCellClick(index) {
+  if (state.gameOver) return;
+  if (state.board[index] !== null) return;
+
+  const mark = state.players[state.currentPlayerIndex].mark;
+  state.board[index] = mark;
+  state.moveCount++;
+
+  const winResult = checkWin(index);
+  if (winResult.won) {
+    state.winningCells = winResult.cells;
+    endGame(state.players[state.currentPlayerIndex].id, winResult.cells);
+  } else if (state.moveCount === state.gridSize * state.gridSize) {
+    endGame('draw', []);
+  } else {
+    state.currentPlayerIndex = 1 - state.currentPlayerIndex;
+    saveGameState();
+    renderBoardCells();
+    renderScoreboard();
+    renderTurnIndicator();
+  }
+}
+
+function checkWin(index) {
+  const N = state.gridSize;
+  const W = state.winLength;
+  const mark = state.board[index];
+  const row = Math.floor(index / N);
+  const col = index % N;
+
+  const DIRS = [[0,1],[1,0],[1,1],[1,-1]];
+
+  for (const [dr, dc] of DIRS) {
+    const cells = [index];
+
+    // extend in positive direction
+    for (let step = 1; step < W; step++) {
+      const r = row + dr * step;
+      const c = col + dc * step;
+      if (r < 0 || r >= N || c < 0 || c >= N) break;
+      const i = r * N + c;
+      if (state.board[i] !== mark) break;
+      cells.push(i);
+    }
+
+    // extend in negative direction
+    for (let step = 1; step < W; step++) {
+      const r = row - dr * step;
+      const c = col - dc * step;
+      if (r < 0 || r >= N || c < 0 || c >= N) break;
+      const i = r * N + c;
+      if (state.board[i] !== mark) break;
+      cells.push(i);
+    }
+
+    if (cells.length >= W) return { won: true, cells };
+  }
+  return { won: false, cells: [] };
+}
+
+function endGame(winnerId, winningCells) {
+  state.gameOver     = true;
+  state.winner       = winnerId;
+  state.winningCells = winningCells;
+
+  const ts = Date.now();
+  const histEntry = {
+    winner:    winnerId,
+    gridSize:  state.gridSize,
+    winLength: state.winLength,
+    timestamp: ts,
+  };
+
+  if (winnerId === 'draw') {
+    state.scores.draws++;
+  } else {
+    state.scores[winnerId]++;
+  }
+
+  state.history.unshift(histEntry); // newest first
+
+  saveGameState();
+  saveSeriesState();
+
+  renderBoardCells();
+  highlightWinningCells(winningCells);
+  renderScoreboard();
+  renderTurnIndicator();
+  showOverlay(winnerId);
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function renderSetupScreen(prefill) {
+  // Player name inputs
+  const p1 = document.getElementById('p1-name');
+  const p2 = document.getElementById('p2-name');
+  p1.value = (prefill ? state.players[0].name : '') || '';
+  p2.value = (prefill ? state.players[1].name : '') || '';
+
+  // Templates
+  const row = document.getElementById('templates-row');
+  row.innerHTML = '';
+  TEMPLATES.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-template';
+    btn.textContent = t.label;
+    btn.addEventListener('click', () => onTemplateClick(i));
+    row.appendChild(btn);
+  });
+
+  // Pre-fill inputs from state if prefill
+  if (prefill) {
+    document.getElementById('grid-size').value  = state.gridSize;
+    document.getElementById('win-length').value = state.winLength;
+    highlightMatchingTemplate();
+  }
+
+  document.getElementById('setup-error').textContent = '';
+  showScreen('screen-setup');
+}
+
+function highlightMatchingTemplate() {
+  const gs = parseInt(document.getElementById('grid-size').value);
+  const wl = parseInt(document.getElementById('win-length').value);
+  document.querySelectorAll('.btn-template').forEach((btn, i) => {
+    btn.classList.toggle('active',
+      TEMPLATES[i].gridSize === gs && TEMPLATES[i].winLength === wl);
+  });
+}
+
+function renderGameScreen() {
+  // Scoreboard names
+  document.getElementById('score-p1-name').textContent = state.players[0].name;
+  document.getElementById('score-p2-name').textContent = state.players[1].name;
+
+  // Config badge
+  document.getElementById('config-badge').textContent =
+    `${state.gridSize}×${state.gridSize} grid · ${state.winLength} in a row to win`;
+
+  renderScoreboard();
+  renderTurnIndicator();
+  buildBoardDOM();
+  renderBoardCells();
+  highlightWinningCells(state.winningCells);
+  renderHistory();
+  document.getElementById('history-card').style.display = 'none';
+
+  showScreen('screen-game');
+}
+
+function renderScoreboard() {
+  document.getElementById('score-p1-wins').textContent = state.scores.p1;
+  document.getElementById('score-p2-wins').textContent = state.scores.p2;
+  document.getElementById('score-draws').textContent   = state.scores.draws;
+
+  const sp1 = document.getElementById('score-p1');
+  const sp2 = document.getElementById('score-p2');
+  sp1.classList.toggle('active-player', !state.gameOver && state.currentPlayerIndex === 0);
+  sp2.classList.toggle('active-player', !state.gameOver && state.currentPlayerIndex === 1);
+}
+
+function renderTurnIndicator() {
+  const el = document.getElementById('turn-indicator');
+  if (state.gameOver) {
+    if (state.winner === 'draw') {
+      el.innerHTML = "It's a <span>draw!</span>";
+    } else {
+      const p = state.players.find(p => p.id === state.winner);
+      const cls = p.mark.toLowerCase();
+      el.innerHTML = `<span class="${cls}">${escHtml(p.name)}</span> wins!`;
+    }
+  } else {
+    const p = state.players[state.currentPlayerIndex];
+    const cls = p.mark.toLowerCase();
+    el.innerHTML = `<span class="${cls}">${escHtml(p.name)}</span>'s turn`;
+  }
+}
+
+function buildBoardDOM() {
+  const board = document.getElementById('board');
+  const N = state.gridSize;
+
+  // Compute cell size to fit viewport
+  const maxPx = Math.min(window.innerWidth * 0.90, window.innerHeight * 0.55);
+  const cellPx = Math.max(28, Math.floor((maxPx - N * 3) / N));
+
+  board.style.gridTemplateColumns = `repeat(${N}, ${cellPx}px)`;
+  document.documentElement.style.setProperty('--cell-size', `${cellPx}px`);
+  board.innerHTML = '';
+
+  for (let i = 0; i < N * N; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.width  = `${cellPx}px`;
+    cell.style.height = `${cellPx}px`;
+    cell.dataset.index = i;
+    cell.addEventListener('click', () => handleCellClick(i));
+    board.appendChild(cell);
+  }
+}
+
+function renderBoardCells() {
+  const cells = document.querySelectorAll('.cell');
+  cells.forEach((cell, i) => {
+    const mark = state.board[i];
+    cell.textContent = mark || '';
+    cell.className = 'cell' +
+      (mark ? ` taken mark-${mark.toLowerCase()}` : '');
+  });
+}
+
+function highlightWinningCells(cells) {
+  if (!cells || !cells.length) return;
+  const allCells = document.querySelectorAll('.cell');
+  cells.forEach(i => {
+    if (allCells[i]) allCells[i].classList.add('winning');
+  });
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  if (!state.history.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">No games played yet.</div>';
+    return;
+  }
+  state.history.slice(0, 50).forEach((entry, idx) => {
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+
+    let winnerText = '';
+    let cls = '';
+    if (entry.winner === 'draw') {
+      winnerText = 'Draw';
+      cls = 'draw';
+    } else {
+      const p = state.players.find(p => p.id === entry.winner);
+      winnerText = p ? p.name : entry.winner;
+      cls = p ? p.mark.toLowerCase() : '';
+    }
+
+    const date = new Date(entry.timestamp).toLocaleString(undefined,
+      { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    div.innerHTML =
+      `<span>#${state.history.length - idx}</span>` +
+      `<span class="winner ${cls}">${escHtml(winnerText)}</span>` +
+      `<span>${entry.gridSize}×${entry.gridSize} / ${entry.winLength}</span>` +
+      `<span>${date}</span>`;
+    list.appendChild(div);
+  });
+}
+
+function showOverlay(winnerId) {
+  const title  = document.getElementById('overlay-title');
+  const series = document.getElementById('overlay-series');
+  const overlay = document.getElementById('overlay');
+
+  if (winnerId === 'draw') {
+    title.textContent = "It's a Draw!";
+    title.className   = 'overlay-title draw';
+  } else {
+    const p = state.players.find(p => p.id === winnerId);
+    title.textContent = `${p.name} Wins!`;
+    title.className   = `overlay-title ${p.mark.toLowerCase()}`;
+  }
+
+  series.innerHTML =
+    `Series: <strong>${escHtml(state.players[0].name)}</strong> ` +
+    `${state.scores.p1} – ${state.scores.draws} – ${state.scores.p2} ` +
+    `<strong>${escHtml(state.players[1].name)}</strong>`;
+
+  overlay.classList.add('show');
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+//  EVENT HANDLERS
+// ═══════════════════════════════════════════════
+function onTemplateClick(idx) {
+  const t = TEMPLATES[idx];
+  document.getElementById('grid-size').value  = t.gridSize;
+  document.getElementById('win-length').value = t.winLength;
+  highlightMatchingTemplate();
+}
+
+function onStartSeries() {
+  const p1name = document.getElementById('p1-name').value.trim() || 'Player 1';
+  const p2name = document.getElementById('p2-name').value.trim() || 'Player 2';
+  const gs     = parseInt(document.getElementById('grid-size').value)  || 3;
+  const wl     = parseInt(document.getElementById('win-length').value) || 3;
+  const err    = document.getElementById('setup-error');
+
+  if (gs < MIN_GRID || gs > MAX_GRID) {
+    err.textContent = `Grid size must be between ${MIN_GRID} and ${MAX_GRID}.`; return;
+  }
+  if (wl < 3 || wl > gs) {
+    err.textContent = `Win length must be between 3 and ${gs}.`; return;
+  }
+  err.textContent = '';
+
+  // Reset series if settings changed
+  const settingsChanged = gs !== state.gridSize || wl !== state.winLength;
+
+  state.players[0].name = p1name;
+  state.players[1].name = p2name;
+  state.gridSize        = gs;
+  state.winLength       = wl;
+  if (settingsChanged) {
+    state.scores  = { p1: 0, p2: 0, draws: 0 };
+    state.history = [];
+    clearAll();
+  }
+  state.currentPlayerIndex = 0;
+
+  initNewGame();
+  saveSeriesState();
+  renderGameScreen();
+}
+
+function onNewGame() {
+  hideOverlay();
+  state.currentPlayerIndex = 1 - state.currentPlayerIndex; // alternate first move
+  initNewGame();
+  renderGameScreen();
+}
+
+function onNewSeries() {
+  hideOverlay();
+  clearAll();
+  state.scores  = { p1: 0, p2: 0, draws: 0 };
+  state.history = [];
+  renderSetupScreen(true);
+}
+
+function onChangeSettings() {
+  renderSetupScreen(true);
+}
+
+function onToggleHistory() {
+  const card = document.getElementById('history-card');
+  const visible = card.style.display !== 'none';
+  card.style.display = visible ? 'none' : 'block';
+  if (!visible) renderHistory();
+  document.getElementById('btn-show-history').textContent =
+    visible ? 'History' : 'Hide History';
+}
+
+// ═══════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Wire static buttons
+  document.getElementById('btn-start').addEventListener('click', onStartSeries);
+  document.getElementById('btn-new-game').addEventListener('click', onNewGame);
+  document.getElementById('btn-change-settings').addEventListener('click', onChangeSettings);
+  document.getElementById('btn-show-history').addEventListener('click', onToggleHistory);
+  document.getElementById('btn-overlay-again').addEventListener('click', onNewGame);
+  document.getElementById('btn-overlay-new-series').addEventListener('click', onNewSeries);
+
+  // Sync template highlight when inputs change
+  document.getElementById('grid-size').addEventListener('input', highlightMatchingTemplate);
+  document.getElementById('win-length').addEventListener('input', highlightMatchingTemplate);
+
+  // Render templates in setup
+  TEMPLATES.forEach((_, i) => {}); // already done in renderSetupScreen
+
+  // Route to correct screen
+  const route = loadFromStorage();
+  if (route === 'game') {
+    renderGameScreen();
+    // If restored game is already over (shouldn't happen normally), show overlay
+    if (state.gameOver && state.winner) {
+      showOverlay(state.winner);
+    }
+  } else {
+    renderSetupScreen(false);
+  }
+
+  // Recalculate board on resize
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (document.getElementById('screen-game').classList.contains('active')) {
+        buildBoardDOM(); // recreates cells with fresh event listeners
+        renderBoardCells();
+        highlightWinningCells(state.winningCells);
+      }
+    }, 150);
+  });
+});
+</script>
+</body>
+</html>
