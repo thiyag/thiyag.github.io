@@ -38,7 +38,7 @@
       max-width: 700px;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.2rem;
     }
 
     h1 {
@@ -109,6 +109,8 @@
       cursor: pointer;
       font-size: 0.85rem;
       transition: all 0.2s;
+      /* mobile: bigger touch target */
+      min-height: 40px;
     }
     .btn-template:hover { border-color: var(--accent); }
     .btn-template.active {
@@ -127,13 +129,14 @@
 
     /* ── Buttons ── */
     .btn {
-      padding: 0.7rem 1.4rem;
+      padding: 0.75rem 1.4rem;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       font-size: 0.95rem;
       font-weight: 600;
       transition: all 0.2s;
+      min-height: 44px; /* mobile tap target */
     }
     .btn-primary {
       background: var(--accent);
@@ -146,6 +149,11 @@
       border: 1px solid rgba(255,255,255,0.1);
     }
     .btn-secondary:hover { border-color: var(--accent); }
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: none;
+    }
 
     .btn-row {
       display: flex;
@@ -202,7 +210,7 @@
     .draws-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
     .draws-count { font-size: 1.5rem; font-weight: 700; color: var(--muted); }
 
-    /* ── Turn Indicator ── */
+    /* ── Turn / Result Indicator ── */
     #turn-indicator {
       text-align: center;
       font-size: 1rem;
@@ -215,12 +223,45 @@
     #turn-indicator .x { color: var(--x-color); }
     #turn-indicator .o { color: var(--o-color); }
 
+    /* ── Result Banner (shown inline after game ends) ── */
+    #result-banner {
+      display: none;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.2rem;
+      text-align: center;
+      flex-direction: column;
+      gap: 0.9rem;
+      animation: slide-down 0.3s cubic-bezier(0.34,1.4,0.64,1);
+    }
+    #result-banner.show { display: flex; }
+
+    @keyframes slide-down {
+      from { transform: translateY(-12px); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+
+    .result-title {
+      font-size: 1.6rem;
+      font-weight: 900;
+    }
+    .result-title.x    { color: var(--x-color); }
+    .result-title.o    { color: var(--o-color); }
+    .result-title.draw { color: var(--muted); }
+
+    .result-series {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .result-series strong { color: var(--text); font-size: 1.05rem; }
+
     /* ── Board ── */
     #board-wrap {
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 0.5rem 0;
+      position: relative;
     }
 
     #board {
@@ -230,6 +271,13 @@
       border-radius: var(--radius);
       padding: 3px;
       position: relative;
+      transition: opacity 0.3s;
+    }
+
+    /* Board dims when game is over */
+    #board.inactive {
+      opacity: 0.55;
+      pointer-events: none;
     }
 
     .cell {
@@ -245,6 +293,8 @@
       user-select: none;
       transition: background 0.15s, transform 0.12s;
       aspect-ratio: 1;
+      /* touch-friendly */
+      -webkit-tap-highlight-color: transparent;
     }
     .cell:hover:not(.taken) {
       background: var(--surface2);
@@ -264,54 +314,6 @@
       from { box-shadow: 0 0 0 2px rgba(255,200,50,0.4); }
       to   { box-shadow: 0 0 8px 4px rgba(255,200,50,0.7); }
     }
-
-    /* ── Overlay ── */
-    #overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15,15,30,0.65);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    #overlay.show { display: flex; }
-
-    .overlay-card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 2rem 2.5rem;
-      text-align: center;
-      max-width: 360px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      animation: pop-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
-    }
-
-    @keyframes pop-in {
-      from { transform: scale(0.8); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-
-    .overlay-title {
-      font-size: 1.8rem;
-      font-weight: 900;
-    }
-    .overlay-title.x { color: var(--x-color); }
-    .overlay-title.o { color: var(--o-color); }
-    .overlay-title.draw { color: var(--muted); }
-
-    .overlay-series {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .overlay-series strong { color: var(--text); font-size: 1.1rem; }
 
     /* ── History ── */
     #history-list {
@@ -349,6 +351,15 @@
       color: var(--accent);
       font-size: 0.85rem;
       min-height: 1.2em;
+    }
+
+    /* ── Mobile tweaks ── */
+    @media (max-width: 480px) {
+      h1 { font-size: 1.6rem; }
+      .card { padding: 1rem; }
+      .btn  { font-size: 0.9rem; padding: 0.7rem 1rem; }
+      .player-wins { font-size: 1.6rem; }
+      .result-title { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -422,6 +433,16 @@
     <!-- Turn indicator -->
     <div id="turn-indicator"></div>
 
+    <!-- Result banner (replaces overlay) -->
+    <div id="result-banner">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-series" id="result-series"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary"   id="btn-result-again">Play Again</button>
+        <button class="btn btn-secondary" id="btn-result-new-series">New Series</button>
+      </div>
+    </div>
+
     <!-- Board -->
     <div id="board-wrap">
       <div id="board"></div>
@@ -432,8 +453,9 @@
 
     <!-- Buttons -->
     <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-undo">Undo Move</button>
       <button class="btn btn-primary"   id="btn-new-game">New Game</button>
-      <button class="btn btn-secondary" id="btn-change-settings">Change Settings</button>
+      <button class="btn btn-secondary" id="btn-change-settings">Settings</button>
       <button class="btn btn-secondary" id="btn-show-history">History</button>
     </div>
 
@@ -441,18 +463,6 @@
     <div class="card" id="history-card" style="display:none;">
       <div class="section-label">Game History</div>
       <div id="history-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════ OVERLAY ════════ -->
-<div id="overlay">
-  <div class="overlay-card">
-    <div class="overlay-title" id="overlay-title"></div>
-    <div class="overlay-series" id="overlay-series"></div>
-    <div class="btn-row">
-      <button class="btn btn-primary"   id="btn-overlay-again">Play Again</button>
-      <button class="btn btn-secondary" id="btn-overlay-new-series">New Series</button>
     </div>
   </div>
 </div>
@@ -491,6 +501,8 @@ let state = {
   winningCells: [],
   scores:       { p1: 0, p2: 0, draws: 0 },
   history:      [],
+  // Undo support: stack of {board, currentPlayerIndex, moveCount}
+  undoStack:    [],
 };
 
 // ═══════════════════════════════════════════════
@@ -518,7 +530,8 @@ function loadFromStorage() {
       state.gameOver           = false;
       state.winner             = null;
       state.winningCells       = [];
-      return 'game'; // resume in-progress game
+      state.undoStack          = gs.undoStack || [];
+      return 'game';
     }
 
     return series ? 'game' : 'setup';
@@ -548,6 +561,7 @@ function saveGameState() {
     moveCount:           state.moveCount,
     gameOver:            state.gameOver,
     winner:              state.winner,
+    undoStack:           state.undoStack,
   };
   localStorage.setItem(STORAGE_GAMESTATE, JSON.stringify(data));
 }
@@ -571,13 +585,20 @@ function initNewGame() {
   state.gameOver         = false;
   state.winner           = null;
   state.winningCells     = [];
-  // Do NOT reset currentPlayerIndex — keep turn order
+  state.undoStack        = [];
   saveGameState();
 }
 
 function handleCellClick(index) {
   if (state.gameOver) return;
   if (state.board[index] !== null) return;
+
+  // Save snapshot for undo before mutating
+  state.undoStack.push({
+    board:               state.board.slice(),
+    currentPlayerIndex:  state.currentPlayerIndex,
+    moveCount:           state.moveCount,
+  });
 
   const mark = state.players[state.currentPlayerIndex].mark;
   state.board[index] = mark;
@@ -595,7 +616,24 @@ function handleCellClick(index) {
     renderBoardCells();
     renderScoreboard();
     renderTurnIndicator();
+    updateUndoButton();
   }
+}
+
+function handleUndo() {
+  if (state.gameOver) return;
+  if (state.undoStack.length === 0) return;
+
+  const prev = state.undoStack.pop();
+  state.board               = prev.board;
+  state.currentPlayerIndex  = prev.currentPlayerIndex;
+  state.moveCount           = prev.moveCount;
+
+  saveGameState();
+  renderBoardCells();
+  renderScoreboard();
+  renderTurnIndicator();
+  updateUndoButton();
 }
 
 function checkWin(index) {
@@ -610,7 +648,6 @@ function checkWin(index) {
   for (const [dr, dc] of DIRS) {
     const cells = [index];
 
-    // extend in positive direction
     for (let step = 1; step < W; step++) {
       const r = row + dr * step;
       const c = col + dc * step;
@@ -620,7 +657,6 @@ function checkWin(index) {
       cells.push(i);
     }
 
-    // extend in negative direction
     for (let step = 1; step < W; step++) {
       const r = row - dr * step;
       const c = col - dc * step;
@@ -654,7 +690,7 @@ function endGame(winnerId, winningCells) {
     state.scores[winnerId]++;
   }
 
-  state.history.unshift(histEntry); // newest first
+  state.history.unshift(histEntry);
 
   saveGameState();
   saveSeriesState();
@@ -663,7 +699,11 @@ function endGame(winnerId, winningCells) {
   highlightWinningCells(winningCells);
   renderScoreboard();
   renderTurnIndicator();
-  showOverlay(winnerId);
+  showResultBanner(winnerId);
+  updateUndoButton();
+
+  // Dim the board to signal it's inactive
+  document.getElementById('board').classList.add('inactive');
 }
 
 // ═══════════════════════════════════════════════
@@ -675,13 +715,11 @@ function showScreen(id) {
 }
 
 function renderSetupScreen(prefill) {
-  // Player name inputs
   const p1 = document.getElementById('p1-name');
   const p2 = document.getElementById('p2-name');
   p1.value = (prefill ? state.players[0].name : '') || '';
   p2.value = (prefill ? state.players[1].name : '') || '';
 
-  // Templates
   const row = document.getElementById('templates-row');
   row.innerHTML = '';
   TEMPLATES.forEach((t, i) => {
@@ -692,7 +730,6 @@ function renderSetupScreen(prefill) {
     row.appendChild(btn);
   });
 
-  // Pre-fill inputs from state if prefill
   if (prefill) {
     document.getElementById('grid-size').value  = state.gridSize;
     document.getElementById('win-length').value = state.winLength;
@@ -713,13 +750,17 @@ function highlightMatchingTemplate() {
 }
 
 function renderGameScreen() {
-  // Scoreboard names
   document.getElementById('score-p1-name').textContent = state.players[0].name;
   document.getElementById('score-p2-name').textContent = state.players[1].name;
 
-  // Config badge
   document.getElementById('config-badge').textContent =
     `${state.gridSize}×${state.gridSize} grid · ${state.winLength} in a row to win`;
+
+  // Reset board active state
+  document.getElementById('board').classList.remove('inactive');
+
+  // Hide result banner
+  document.getElementById('result-banner').classList.remove('show');
 
   renderScoreboard();
   renderTurnIndicator();
@@ -727,6 +768,7 @@ function renderGameScreen() {
   renderBoardCells();
   highlightWinningCells(state.winningCells);
   renderHistory();
+  updateUndoButton();
   document.getElementById('history-card').style.display = 'none';
 
   showScreen('screen-game');
@@ -746,13 +788,7 @@ function renderScoreboard() {
 function renderTurnIndicator() {
   const el = document.getElementById('turn-indicator');
   if (state.gameOver) {
-    if (state.winner === 'draw') {
-      el.innerHTML = "It's a <span>draw!</span>";
-    } else {
-      const p = state.players.find(p => p.id === state.winner);
-      const cls = p.mark.toLowerCase();
-      el.innerHTML = `<span class="${cls}">${escHtml(p.name)}</span> wins!`;
-    }
+    el.textContent = '';
   } else {
     const p = state.players[state.currentPlayerIndex];
     const cls = p.mark.toLowerCase();
@@ -764,8 +800,7 @@ function buildBoardDOM() {
   const board = document.getElementById('board');
   const N = state.gridSize;
 
-  // Compute cell size to fit viewport
-  const maxPx = Math.min(window.innerWidth * 0.90, window.innerHeight * 0.55);
+  const maxPx = Math.min(window.innerWidth * 0.92, window.innerHeight * 0.52);
   const cellPx = Math.max(28, Math.floor((maxPx - N * 3) / N));
 
   board.style.gridTemplateColumns = `repeat(${N}, ${cellPx}px)`;
@@ -799,6 +834,33 @@ function highlightWinningCells(cells) {
   cells.forEach(i => {
     if (allCells[i]) allCells[i].classList.add('winning');
   });
+}
+
+function updateUndoButton() {
+  const btn = document.getElementById('btn-undo');
+  btn.disabled = state.gameOver || state.undoStack.length === 0;
+}
+
+function showResultBanner(winnerId) {
+  const title  = document.getElementById('result-title');
+  const series = document.getElementById('result-series');
+  const banner = document.getElementById('result-banner');
+
+  if (winnerId === 'draw') {
+    title.textContent = "It's a Draw!";
+    title.className   = 'result-title draw';
+  } else {
+    const p = state.players.find(p => p.id === winnerId);
+    title.textContent = `${p.name} Wins!`;
+    title.className   = `result-title ${p.mark.toLowerCase()}`;
+  }
+
+  series.innerHTML =
+    `Series: <strong>${escHtml(state.players[0].name)}</strong> ` +
+    `${state.scores.p1} – ${state.scores.draws} – ${state.scores.p2} ` +
+    `<strong>${escHtml(state.players[1].name)}</strong>`;
+
+  banner.classList.add('show');
 }
 
 function renderHistory() {
@@ -835,32 +897,6 @@ function renderHistory() {
   });
 }
 
-function showOverlay(winnerId) {
-  const title  = document.getElementById('overlay-title');
-  const series = document.getElementById('overlay-series');
-  const overlay = document.getElementById('overlay');
-
-  if (winnerId === 'draw') {
-    title.textContent = "It's a Draw!";
-    title.className   = 'overlay-title draw';
-  } else {
-    const p = state.players.find(p => p.id === winnerId);
-    title.textContent = `${p.name} Wins!`;
-    title.className   = `overlay-title ${p.mark.toLowerCase()}`;
-  }
-
-  series.innerHTML =
-    `Series: <strong>${escHtml(state.players[0].name)}</strong> ` +
-    `${state.scores.p1} – ${state.scores.draws} – ${state.scores.p2} ` +
-    `<strong>${escHtml(state.players[1].name)}</strong>`;
-
-  overlay.classList.add('show');
-}
-
-function hideOverlay() {
-  document.getElementById('overlay').classList.remove('show');
-}
-
 // ═══════════════════════════════════════════════
 //  EVENT HANDLERS
 // ═══════════════════════════════════════════════
@@ -886,7 +922,6 @@ function onStartSeries() {
   }
   err.textContent = '';
 
-  // Reset series if settings changed
   const settingsChanged = gs !== state.gridSize || wl !== state.winLength;
 
   state.players[0].name = p1name;
@@ -906,14 +941,12 @@ function onStartSeries() {
 }
 
 function onNewGame() {
-  hideOverlay();
-  state.currentPlayerIndex = 1 - state.currentPlayerIndex; // alternate first move
+  state.currentPlayerIndex = 1 - state.currentPlayerIndex;
   initNewGame();
   renderGameScreen();
 }
 
 function onNewSeries() {
-  hideOverlay();
   clearAll();
   state.scores  = { p1: 0, p2: 0, draws: 0 };
   state.history = [];
@@ -948,40 +981,34 @@ function escHtml(str) {
 //  INIT
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Wire static buttons
   document.getElementById('btn-start').addEventListener('click', onStartSeries);
   document.getElementById('btn-new-game').addEventListener('click', onNewGame);
   document.getElementById('btn-change-settings').addEventListener('click', onChangeSettings);
   document.getElementById('btn-show-history').addEventListener('click', onToggleHistory);
-  document.getElementById('btn-overlay-again').addEventListener('click', onNewGame);
-  document.getElementById('btn-overlay-new-series').addEventListener('click', onNewSeries);
+  document.getElementById('btn-undo').addEventListener('click', handleUndo);
+  document.getElementById('btn-result-again').addEventListener('click', onNewGame);
+  document.getElementById('btn-result-new-series').addEventListener('click', onNewSeries);
 
-  // Sync template highlight when inputs change
   document.getElementById('grid-size').addEventListener('input', highlightMatchingTemplate);
   document.getElementById('win-length').addEventListener('input', highlightMatchingTemplate);
 
-  // Render templates in setup
-  TEMPLATES.forEach((_, i) => {}); // already done in renderSetupScreen
-
-  // Route to correct screen
   const route = loadFromStorage();
   if (route === 'game') {
     renderGameScreen();
-    // If restored game is already over (shouldn't happen normally), show overlay
     if (state.gameOver && state.winner) {
-      showOverlay(state.winner);
+      showResultBanner(state.winner);
+      document.getElementById('board').classList.add('inactive');
     }
   } else {
     renderSetupScreen(false);
   }
 
-  // Recalculate board on resize
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (document.getElementById('screen-game').classList.contains('active')) {
-        buildBoardDOM(); // recreates cells with fresh event listeners
+        buildBoardDOM();
         renderBoardCells();
         highlightWinningCells(state.winningCells);
       }
