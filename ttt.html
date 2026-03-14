@@ -170,8 +170,9 @@
     ══════════════════════════════════ */
     #scoreboard {
       flex-shrink: 0;
-      padding: 0.75rem 1rem 0.6rem;
+      padding: 0.7rem 1.25rem 0.7rem;
       background: var(--surface);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     .scoreboard {
@@ -217,55 +218,51 @@
     .draws-count { font-size: 1.2rem; font-weight: 700; color: var(--muted); }
 
     /* ══════════════════════════════════
-       TURN INDICATOR
+       STATUS ROW (turn indicator OR result)
     ══════════════════════════════════ */
+    #status-row {
+      flex-shrink: 0;
+      height: 2.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     #turn-indicator {
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--muted);
-      padding: 0.4rem 1rem 0.2rem;
-      min-height: 2rem;
-      flex-shrink: 0;
     }
     #turn-indicator span { font-weight: 700; }
     #turn-indicator .x { color: var(--x-color); }
     #turn-indicator .o { color: var(--o-color); }
 
     /* ══════════════════════════════════
-       RESULT BANNER
+       RESULT BANNER (inline, between score and board)
     ══════════════════════════════════ */
     #result-banner {
       display: none;
-      background: var(--surface);
-      margin: 0 0.75rem;
-      border-radius: var(--radius);
-      padding: 1rem;
-      text-align: center;
-      flex-direction: column;
-      gap: 0.7rem;
       flex-shrink: 0;
-      animation: slide-down 0.28s cubic-bezier(0.34,1.4,0.64,1);
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      animation: fade-in 0.25s ease-out;
     }
     #result-banner.show { display: flex; }
 
-    @keyframes slide-down {
-      from { transform: translateY(-10px); opacity: 0; }
-      to   { transform: translateY(0);     opacity: 1; }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .result-title { font-size: 1.4rem; font-weight: 900; }
+    .result-title {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
     .result-title.x    { color: var(--x-color); }
     .result-title.o    { color: var(--o-color); }
     .result-title.draw { color: var(--muted); }
-
-    .result-series { font-size: 0.8rem; color: var(--muted); }
-    .result-series strong { color: var(--text); }
-
-    .result-actions {
-      display: flex;
-      gap: 0.6rem;
-      justify-content: center;
-    }
 
     /* ══════════════════════════════════
        BOARD
@@ -277,6 +274,7 @@
       align-items: center;
       min-height: 0;
       padding: 0.5rem;
+      padding-bottom: 3rem;
     }
 
     #board {
@@ -335,10 +333,11 @@
     /* config badge */
     #config-badge {
       text-align: center;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--muted);
-      padding: 0 0 0.3rem;
+      padding: 0.3rem 1rem 0.55rem;
       flex-shrink: 0;
+      opacity: 0.7;
     }
 
     /* ══════════════════════════════════
@@ -398,8 +397,6 @@
       color: #fff;
       min-width: 100px;
       border-radius: 22px;
-      flex-direction: row;
-      gap: 6px;
       font-size: 0.88rem;
       font-weight: 700;
       padding: 0 1rem;
@@ -543,28 +540,6 @@
     .history-entry .winner.o { color: var(--o-color); }
     .history-entry .winner.draw { color: var(--muted); }
 
-    /* ══════════════════════════════════
-       SHARED BUTTON (result banner only)
-    ══════════════════════════════════ */
-    .btn {
-      padding: 0.65rem 1.2rem;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      min-height: 44px;
-    }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:active { filter: brightness(0.85); }
-    .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .btn-secondary:active { opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -611,7 +586,7 @@
 
   <!-- ════════ GAME SCREEN ════════ -->
   <div id="screen-game" class="screen">
-
+    <h1>Tic Tac Toe</h1><h1></h1>
     <!-- Scoreboard -->
     <div id="scoreboard">
       <div class="scoreboard">
@@ -631,17 +606,11 @@
         </div>
       </div>
     </div>
-
-    <!-- Turn indicator -->
-    <div id="turn-indicator"></div>
-
-    <!-- Result banner -->
-    <div id="result-banner">
-      <div class="result-title" id="result-title"></div>
-      <div class="result-series" id="result-series"></div>
-      <div class="result-actions">
-        <button class="btn btn-primary"   id="btn-result-again">Play Again</button>
-        <button class="btn btn-secondary" id="btn-result-new-series">New Series</button>
+    <!-- Turn / Result row -->
+    <div id="status-row">
+      <div id="turn-indicator"></div>
+      <div id="result-banner">
+        <div class="result-title" id="result-title"></div>
       </div>
     </div>
 
@@ -667,9 +636,6 @@
   </button>
 
   <button class="bar-btn" id="btn-new-game" title="New Game">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="5 12 12 5 19 12"/>
-    </svg>
     New Game
   </button>
 
@@ -956,6 +922,7 @@ function renderGameScreen() {
     `${state.gridSize}×${state.gridSize}, win ${state.winLength}`;
   document.getElementById('board').classList.remove('inactive');
   document.getElementById('result-banner').classList.remove('show');
+  document.getElementById('turn-indicator').style.display = '';
   renderScoreboard();
   renderTurnIndicator();
   buildBoardDOM();
@@ -1027,8 +994,7 @@ function updateUndoButton() {
 }
 
 function showResultBanner(winnerId) {
-  const title  = document.getElementById('result-title');
-  const series = document.getElementById('result-series');
+  const title = document.getElementById('result-title');
   if (winnerId === 'draw') {
     title.textContent = "It's a Draw!"; title.className = 'result-title draw';
   } else {
@@ -1036,11 +1002,13 @@ function showResultBanner(winnerId) {
     title.textContent = `${p.name} Wins!`;
     title.className   = `result-title ${p.mark.toLowerCase()}`;
   }
-  series.innerHTML =
-    `<strong>${escHtml(state.players[0].name)}</strong> ` +
-    `${state.scores.p1}–${state.scores.draws}–${state.scores.p2} ` +
-    `<strong>${escHtml(state.players[1].name)}</strong>`;
+  document.getElementById('turn-indicator').style.display = 'none';
   document.getElementById('result-banner').classList.add('show');
+}
+
+function hideResultBanner() {
+  document.getElementById('result-banner').classList.remove('show');
+  document.getElementById('turn-indicator').style.display = '';
 }
 
 function renderHistory() {
@@ -1117,11 +1085,13 @@ function onStartSeries() {
 }
 
 function onNewGame() {
+  hideResultBanner();
   state.currentPlayerIndex = 1 - state.currentPlayerIndex;
   initNewGame(); renderGameScreen();
 }
 
 function onNewSeries() {
+  hideResultBanner();
   closeDrawer();
   clearAll();
   state.scores = { p1:0, p2:0, draws:0 }; state.history = [];
@@ -1149,10 +1119,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-game').addEventListener('click', onNewGame);
   document.getElementById('btn-undo').addEventListener('click', handleUndo);
   document.getElementById('btn-menu').addEventListener('click', openDrawer);
-
-  // Result banner
-  document.getElementById('btn-result-again').addEventListener('click', onNewGame);
-  document.getElementById('btn-result-new-series').addEventListener('click', onNewSeries);
 
   // Drawer
   document.getElementById('drawer-backdrop').addEventListener('click', closeDrawer);
